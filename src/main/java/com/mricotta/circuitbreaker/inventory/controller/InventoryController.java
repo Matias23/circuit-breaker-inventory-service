@@ -1,10 +1,12 @@
 package com.mricotta.circuitbreaker.inventory.controller;
 
 import com.mricotta.circuitbreaker.inventory.dto.FaultStatusResponse;
+import com.mricotta.circuitbreaker.inventory.dto.InventoryItemResponse;
 import com.mricotta.circuitbreaker.inventory.dto.StockCheckResponse;
 import com.mricotta.circuitbreaker.inventory.service.FaultService;
 import com.mricotta.circuitbreaker.inventory.service.InventoryService;
 import jakarta.validation.constraints.Positive;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +25,11 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
     private final FaultService faultService;
+
+    @GetMapping
+    public ResponseEntity<List<InventoryItemResponse>> listInventory() {
+        return ResponseEntity.ok(inventoryService.listInventory());
+    }
 
     @GetMapping("/{productId}")
     public ResponseEntity<StockCheckResponse> checkStock(

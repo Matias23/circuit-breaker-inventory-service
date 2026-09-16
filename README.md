@@ -37,7 +37,7 @@ POST /v1/inventory/toggle-fault ──► FaultServiceImpl ──► flips the A
 
 ## Stack
 
-Java 21 · Spring Boot 4 · Spring MVC · Spring Data JPA · H2 (in-memory) · Bean Validation · Lombok
+Java 21 · Spring Boot 4 · Spring MVC · Spring Data JPA · H2 (in-memory) · Bean Validation · MapStruct · Lombok
 
 ## Run
 
@@ -58,10 +58,17 @@ keyboard with zero stock so the "out of stock" path works without editing any da
 
 | Method | Path | Description | Success |
 |---|---|---|---|
+| GET | `/v1/inventory` | List every inventory item, sorted by id | 200 |
 | GET | `/v1/inventory/{productId}?quantity=N` | Check whether `productId` has at least `N` units | 200 |
 | POST | `/v1/inventory/toggle-fault` | Flip the injected fault and return the new state | 200 |
 
+The listing is **not** affected by the injected fault: it is the inspection endpoint, and it is most
+useful precisely while the stock checks are failing.
+
 ```bash
+curl -s localhost:8082/v1/inventory
+# [{"id":1,"name":"Laptop","quantity":10,"updatedAt":"..."}, ...]
+
 curl -s 'localhost:8082/v1/inventory/1?quantity=2'
 # {"productId":1,"requested":2,"available":10,"inStock":true}
 
@@ -98,5 +105,5 @@ Add that dependency and `spring.h2.console.enabled: true` if you want it.
 ./mvnw clean verify
 ```
 
-Mockito + AssertJ unit tests for both services, and a `@WebMvcTest` slice covering the 200, 404, 500
-and toggle responses.
+Mockito + AssertJ unit tests for both services and the mapper, and a `@WebMvcTest` slice covering the
+listing, 200, 404, 500 and toggle responses.

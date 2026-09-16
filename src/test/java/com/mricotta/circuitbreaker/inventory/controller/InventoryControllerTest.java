@@ -6,11 +6,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.mricotta.circuitbreaker.inventory.dto.InventoryItemResponse;
 import com.mricotta.circuitbreaker.inventory.dto.StockCheckResponse;
 import com.mricotta.circuitbreaker.inventory.exception.InventoryFaultException;
 import com.mricotta.circuitbreaker.inventory.exception.InventoryItemNotFoundException;
 import com.mricotta.circuitbreaker.inventory.service.FaultService;
 import com.mricotta.circuitbreaker.inventory.service.InventoryService;
+import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -28,6 +31,22 @@ class InventoryControllerTest {
 
     @MockitoBean
     private FaultService faultService;
+
+    @Test
+    void listInventory_returnsOkWithEveryItem() throws Exception {
+        given(inventoryService.listInventory()).willReturn(List.of(
+                new InventoryItemResponse(1L, "Laptop", 10, Instant.now()),
+                new InventoryItemResponse(3L, "Keyboard", 0, Instant.now())));
+
+        mockMvc.perform(get("/v1/inventory"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("Laptop"))
+                .andExpect(jsonPath("$[0].quantity").value(10))
+                .andExpect(jsonPath("$[1].id").value(3))
+                .andExpect(jsonPath("$[1].quantity").value(0));
+    }
 
     @Test
     void checkStock_whenAvailable_returnsOkWithStockCheck() throws Exception {
