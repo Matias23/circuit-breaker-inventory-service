@@ -87,6 +87,27 @@ Error responses:
 | 404 | No inventory item with that id |
 | 500 | The injected fault is enabled |
 
+## Actuator
+
+Exposed under `/actuator`: `health`, `info`, `metrics`, `env`, `loggers`, `mappings`, `beans`.
+
+| Path | Description |
+|---|---|
+| `/actuator/health` | Aggregate health, with `db`, `diskSpace`, `ping` and `fault` components |
+| `/actuator/health/liveness`, `/actuator/health/readiness` | Kubernetes-style probes |
+| `/actuator/info` | App, Java and OS info |
+| `/actuator/metrics/http.server.requests` | Request counts and timings, filterable by `?tag=status:500` |
+| `/actuator/loggers/{name}` | Read or change a logger's level at runtime |
+
+The custom `fault` health indicator mirrors the injected fault, so toggling it takes `/actuator/health`
+to `DOWN` with a 503. `env` is set to show raw values; that is fine for a local demo only.
+
+```bash
+curl -s -X POST localhost:8082/v1/inventory/toggle-fault
+curl -i localhost:8082/actuator/health
+# HTTP/1.1 503 ... "fault":{"status":"DOWN","details":{"faultEnabled":true}}
+```
+
 ## Configuration
 
 | Property | Default | Meaning |
