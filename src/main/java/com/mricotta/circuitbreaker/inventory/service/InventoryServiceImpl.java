@@ -1,5 +1,6 @@
 package com.mricotta.circuitbreaker.inventory.service;
 
+import com.mricotta.circuitbreaker.inventory.dto.CreateInventoryItemRequest;
 import com.mricotta.circuitbreaker.inventory.dto.InventoryItemResponse;
 import com.mricotta.circuitbreaker.inventory.dto.StockCheckResponse;
 import com.mricotta.circuitbreaker.inventory.exception.InventoryFaultException;
@@ -8,10 +9,12 @@ import com.mricotta.circuitbreaker.inventory.mapper.InventoryItemMapper;
 import com.mricotta.circuitbreaker.inventory.repository.InventoryItemRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InventoryServiceImpl implements InventoryService {
@@ -47,5 +50,17 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public List<InventoryItemResponse> listInventory() {
         return inventoryItemMapper.toDtoList(inventoryItemRepository.findAll(BY_ID));
+    }
+
+    /**
+     * The only write in the service. Like the listing, it ignores the injected fault: the fault
+     * exists to break stock checks for the caller, not to block seeding new products.
+     */
+    @Override
+    @Transactional
+    public InventoryItemResponse createItem(CreateInventoryItemRequest request) {
+        var saved = inventoryItemRepository.save(inventoryItemMapper.toEntity(request));
+        log.info("Created inventory item {} with id {}", saved.getName(), saved.getId());
+        return inventoryItemMapper.toDto(saved);
     }
 }

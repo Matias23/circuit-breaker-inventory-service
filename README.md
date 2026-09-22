@@ -37,7 +37,7 @@ POST /v1/inventory/toggle-fault ──► FaultServiceImpl ──► flips the A
 
 ## Stack
 
-Java 21 · Spring Boot 4 · Spring MVC · Spring Data JPA · H2 (in-memory) · Bean Validation · MapStruct · Lombok
+Java 21 · Spring Boot 4 · Spring MVC · Spring Data JPA · H2 (in-memory) or Aurora PostgreSQL · Bean Validation · MapStruct · Lombok
 
 ## Run
 
@@ -53,6 +53,27 @@ keyboard with zero stock so the "out of stock" path works without editing any da
 | 1 | Laptop | 10 |
 | 2 | Mouse | 50 |
 | 3 | Keyboard | 0 |
+
+### Against Amazon Aurora
+
+The `aurora` profile swaps H2 for an Aurora PostgreSQL cluster created with **express configuration**
+(the only Aurora shape on the AWS Free Tier: up to 4 ACU and 1 GB per cluster). Such a cluster has no
+VPC and **no password**: it only accepts IAM authentication, so the connection goes through the AWS
+JDBC wrapper, which signs a short-lived token for every new connection.
+
+```bash
+export AWS_PROFILE=<your-profile>                                        # any working AWS credentials
+export AURORA_ENDPOINT=<cluster>.cluster-xxxx.<region>.rds.amazonaws.com # writer endpoint
+./mvnw spring-boot:run -Dspring-boot.run.profiles=aurora
+```
+
+The IAM identity needs `rds-db:connect` on the cluster. `ddl-auto: update` creates `inventory_items`
+on the first start, and the seeding only runs while the table is empty, so unlike H2 the data survives
+restarts. Query the same rows with psql from the RDS console (Connectivity & security → CloudShell):
+
+```sql
+SELECT * FROM inventory_items ORDER BY id;
+```
 
 ## Endpoints
 
@@ -116,6 +137,14 @@ curl -i localhost:8082/actuator/health
 | `spring.datasource.url` | `jdbc:h2:mem:inventory;DB_CLOSE_DELAY=-1` | In-memory database; `DB_CLOSE_DELAY=-1` keeps the schema alive between pooled connections |
 | `spring.jpa.hibernate.ddl-auto` | `update` | Schema comes from the JPA annotations; there is no Flyway and no `.sql` file |
 | `spring.threads.virtual.enabled` | `true` | Virtual threads for the request path |
+
+Profile `aurora` (`application-aurora.yml`) overrides the datasource:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `AURORA_ENDPOINT` | — | Cluster writer endpoint, required |
+| `AURORA_DB` | `postgres` | Database name |
+| `AURORA_USER` | `postgres` | Master username; its password is an IAM token minted per connection |
 
 The H2 web console is not enabled: in Boot 4 it lives in the separate `spring-boot-h2console` module.
 Add that dependency and `spring.h2.console.enabled: true` if you want it.

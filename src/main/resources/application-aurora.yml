@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    # Aurora PostgreSQL created with "express configuration": no VPC, no password. The AWS JDBC
+    # wrapper's `iam` plugin signs a 15-minute auth token per new connection, using the default
+    # credential chain (AWS_PROFILE / SSO / env vars) and the region parsed from the endpoint.
+    url: jdbc:aws-wrapper:postgresql://${AURORA_ENDPOINT}:5432/${AURORA_DB:postgres}?wrapperPlugins=iam&sslmode=require
+    username: ${AURORA_USER:postgres}
+    password: ""
+    driver-class-name: software.amazon.jdbc.Driver
+    hikari:
+      # The serverless instance may be resuming from 0 ACU on the first connection.
+      connection-timeout: 60000
+      # 14 min: recycle connections before the IAM token that opened them expires.
+      max-lifetime: 840000
+  jpa:
+    show-sql: true
+    properties:
+      hibernate.format_sql: true

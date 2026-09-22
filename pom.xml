@@ -30,6 +30,8 @@
 		<java.version>21</java.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 		<lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+		<aws-jdbc-wrapper.version>2.6.0</aws-jdbc-wrapper.version>
+		<aws-sdk.version>2.46.7</aws-sdk.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -57,6 +59,25 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- Aurora PostgreSQL (profile "aurora"): driver, plus the AWS wrapper that signs the
+		     short-lived IAM auth tokens the express-configuration cluster requires. -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.jdbc</groupId>
+			<artifactId>aws-advanced-jdbc-wrapper</artifactId>
+			<version>${aws-jdbc-wrapper.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>rds</artifactId>
+			<version>${aws-sdk.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
